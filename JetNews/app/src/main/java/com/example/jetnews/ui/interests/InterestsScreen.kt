@@ -17,6 +17,7 @@
 package com.example.jetnews.ui.interests
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -37,8 +38,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -118,6 +120,7 @@ fun InterestsScreen(
     openDrawer: () -> Unit,
     snackbarHostState: SnackbarHostState
 ) {
+    val context = LocalContext.current
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
@@ -125,7 +128,8 @@ fun InterestsScreen(
                 title = {
                     Text(
                         text = stringResource(R.string.cd_interests),
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 },
                 navigationIcon = {
@@ -136,14 +140,19 @@ fun InterestsScreen(
                                 contentDescription = stringResource(
                                     R.string.cd_open_navigation_drawer
                                 ),
-                                tint = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
                 },
                 actions = {
                     IconButton(
-                        onClick = { /* TODO: Open search */ }
+                        onClick = {
+                            Toast.makeText(
+                                context,
+                                "Search is not yet implemented in this configuration",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Search,
@@ -224,7 +233,7 @@ private fun InterestScreenContent(
     val selectedTabIndex = tabContent.indexOfFirst { it.section == currentSection }
     Column(modifier) {
         InterestsTabRow(selectedTabIndex, updateSection, tabContent, isExpandedScreen)
-        Divider(
+        HorizontalDivider(
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
         )
         Box(modifier = Modifier.weight(1f)) {
@@ -343,7 +352,7 @@ private fun TopicItem(
             Spacer(Modifier.width(16.dp))
             SelectTopicButton(selected = selected)
         }
-        Divider(
+        HorizontalDivider(
             modifier = modifier.padding(start = 72.dp, top = 8.dp, bottom = 8.dp),
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
         )

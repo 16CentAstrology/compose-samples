@@ -16,30 +16,32 @@
 
 package com.example.jetlagged
 
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color.Companion.White
-import androidx.core.view.WindowCompat
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import com.example.jetlagged.ui.theme.JetLaggedTheme
 
 class MainActivity : ComponentActivity() {
 
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
+            val windowSizeClass = calculateWindowSizeClass(this)
             JetLaggedTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = White
-                ) {
-                    JetLaggedScreen()
-                }
+                HomeScreenDrawer(windowSizeClass)
             }
         }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Changing the theme doesn't recreate the activity, so set the E2E values again
+        enableEdgeToEdge()
     }
 }
