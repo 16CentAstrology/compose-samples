@@ -13,8 +13,7 @@
   the License.
   -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.jetlagged">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!--Load images from Unsplash-->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -24,15 +23,18 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
+        android:resizeableActivity="true"
+        android:enableOnBackInvokedCallback="true"
         android:theme="@style/Theme.JetLagged">
 
         <profileable android:shell="true" tools:targetApi="q" />
 
         <activity
             android:name=".MainActivity"
-            android:label="@string/app_name"
             android:theme="@style/Theme.JetLagged"
-            android:exported="true">
+            android:exported="true"
+            android:configChanges="screenSize|smallestScreenSize|orientation|screenLayout|uiMode"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

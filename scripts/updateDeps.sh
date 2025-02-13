@@ -16,7 +16,7 @@
 
 ########################################################################
 #
-# Updates dependencies using Jetchat as the source of truth (then copies Jetchat's 
+# Updates dependencies using Reply as the source of truth (then copies Reply's 
 # output into each sample)
 #
 # Example: To run build over all projects run:
@@ -26,7 +26,7 @@
 
 set -xe
 
-./JetNews/gradlew -p ./JetNews versionCatalogUpdate 
+./Jetcaster/gradlew -p ./Jetcaster versionCatalogUpdate 
 
-cp JetNews/gradle/libs.versions.toml scripts/libs.versions.toml
+cp Jetcaster/gradle/libs.versions.toml scripts/libs.versions.toml
 ./scripts/duplicate_version_config.sh
