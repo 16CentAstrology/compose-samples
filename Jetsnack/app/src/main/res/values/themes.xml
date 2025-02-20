@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   Copyright 2020 The Android Open Source Project
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -17,8 +16,6 @@
     <style name="Theme.Jetsnack" parent="Theme.Material.DayNight.NoActionBar">
         <item name="android:colorPrimary">#ff00ff</item>
         <item name="android:colorAccent">#ff00ff</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:dialogTheme">@style/Theme.DialogFullScreen</item>
     </style>
 
