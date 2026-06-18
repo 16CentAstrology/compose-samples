@@ -51,6 +51,7 @@ import androidx.wear.compose.material3.PlaceholderState
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.TextDefaults
 import androidx.wear.compose.material3.lazy.TransformationSpec
 import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
@@ -298,7 +299,13 @@ private fun TransformingLazyColumnScope.episodeInfoContent(episode: PlayerEpisod
     if (summary != null) {
         val summaryInParagraphs = summary.split("\n+".toRegex()).orEmpty()
         items(summaryInParagraphs) {
-            HtmlTextContainer(text = summary) {
+            HtmlTextContainer(
+                text = it,
+                modifier = Modifier.minimumVerticalContentPadding(
+                    TextDefaults.minimumTopListContentPadding,
+                    TextDefaults.minimumBottomListContentPadding,
+                ),
+            ) {
                 Text(
                     text = it,
                     style = MaterialTheme.typography.bodySmall,
