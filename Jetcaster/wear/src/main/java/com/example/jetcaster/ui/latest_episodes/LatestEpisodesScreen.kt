@@ -33,11 +33,16 @@ import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.AlertDialog
 import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.ListHeader
+import androidx.wear.compose.material3.ListHeaderDefaults
 import androidx.wear.compose.material3.PlaceholderState
 import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.lazy.rememberTransformationSpec
+import androidx.wear.compose.material3.lazy.transformedHeight
 import androidx.wear.compose.material3.placeholder
 import androidx.wear.compose.material3.placeholderShimmer
 import androidx.wear.compose.material3.rememberPlaceholderState
@@ -47,8 +52,6 @@ import com.example.jetcaster.R
 import com.example.jetcaster.core.player.model.PlayerEpisode
 import com.example.jetcaster.ui.components.MediaContent
 import com.example.jetcaster.ui.preview.WearPreviewEpisodes
-import com.google.android.horologist.compose.layout.ColumnItemType
-import com.google.android.horologist.compose.layout.rememberResponsiveColumnPadding
 
 @Composable fun LatestEpisodesScreen(
     onPlayButtonClick: () -> Unit,
@@ -80,15 +83,9 @@ fun LatestEpisodeScreen(
     onPlayEpisode: (PlayerEpisode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val contentPadding = rememberResponsiveColumnPadding(
-        first = ColumnItemType.ListHeader,
-        last = ColumnItemType.Button,
-    )
-
     val columnState = rememberTransformingLazyColumnState()
     ScreenScaffold(
         scrollState = columnState,
-        contentPadding = contentPadding,
         modifier = modifier.placeholderShimmer(placeholderState),
     ) { contentPadding ->
         when (uiState) {
@@ -135,6 +132,7 @@ fun ButtonsContent(
     placeholderState: PlaceholderState,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    transformation: SurfaceTransformation? = null,
 ) {
     Button(
         onClick = {
@@ -149,6 +147,7 @@ fun ButtonsContent(
             )
         },
         modifier = modifier.fillMaxWidth().placeholder(placeholderState = placeholderState),
+        transformation = transformation,
     ) {
         Text(stringResource(id = R.string.button_play_content_description))
     }
@@ -165,13 +164,24 @@ fun LatestEpisodesScreen(
     placeholderState: PlaceholderState,
     modifier: Modifier = Modifier,
 ) {
+    val transformationSpec = rememberTransformationSpec()
     TransformingLazyColumn(
         modifier = modifier,
         state = scrollState,
         contentPadding = contentPadding,
     ) {
         item {
-            LatestEpisodesListHeader(placeholderState)
+            LatestEpisodesListHeader(
+                placeholderState = placeholderState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(
+                        ListHeaderDefaults.minimumTopListContentPadding,
+                        ListHeaderDefaults.minimumBottomListContentPadding,
+                    )
+                    .transformedHeight(this, transformationSpec),
+                transformation = SurfaceTransformation(transformationSpec),
+            )
         }
         item {
             ButtonsContent(
@@ -179,6 +189,11 @@ fun LatestEpisodesScreen(
                 onPlayButtonClick = onPlayButtonClick,
                 onPlayEpisodes = onPlayEpisodes,
                 placeholderState = placeholderState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
+                    .transformedHeight(this, transformationSpec),
+                transformation = SurfaceTransformation(transformationSpec),
             )
         }
         items(episodeList) { episode ->
@@ -189,14 +204,26 @@ fun LatestEpisodesScreen(
                     onPlayButtonClick()
                     onPlayEpisode(episode)
                 },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
+                    .transformedHeight(this, transformationSpec),
+                transformation = SurfaceTransformation(transformationSpec),
             )
         }
     }
 }
 
 @Composable
-fun LatestEpisodesListHeader(placeholderState: PlaceholderState, modifier: Modifier = Modifier) {
-    ListHeader(modifier = modifier.placeholder(placeholderState)) {
+fun LatestEpisodesListHeader(
+    placeholderState: PlaceholderState,
+    modifier: Modifier = Modifier,
+    transformation: SurfaceTransformation? = null,
+) {
+    ListHeader(
+        modifier = modifier.placeholder(placeholderState),
+        transformation = transformation,
+    ) {
         Text(
             text = stringResource(id = R.string.latest_episodes),
             maxLines = 1,
@@ -212,18 +239,13 @@ fun LatestEpisodeScreenLoadedPreview(
     @PreviewParameter(WearPreviewEpisodes::class)
     episode: PlayerEpisode,
 ) {
-    val contentPadding = rememberResponsiveColumnPadding(
-        first = ColumnItemType.ListHeader,
-        last = ColumnItemType.Button,
-    )
-
     val columnState = rememberTransformingLazyColumnState()
     LatestEpisodesScreen(
         episodeList = listOf(episode),
         onPlayButtonClick = { },
         onPlayEpisode = { },
         onPlayEpisodes = { },
-        contentPadding = contentPadding,
+        contentPadding = PaddingValues(),
         scrollState = columnState,
         placeholderState = rememberPlaceholderState(isVisible = false),
     )

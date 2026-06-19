@@ -35,8 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumnState
@@ -47,11 +46,13 @@ import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.FilledTonalButton
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.ListHeader
+import androidx.wear.compose.material3.ListHeaderDefaults
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.PlaceholderState
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.TextDefaults
 import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
 import androidx.wear.compose.material3.placeholder
@@ -65,8 +66,6 @@ import com.example.jetcaster.core.model.PodcastInfo
 import com.example.jetcaster.core.player.model.PlayerEpisode
 import com.example.jetcaster.ui.preview.WearPreviewEpisodes
 import com.example.jetcaster.ui.preview.WearPreviewPodcasts
-import com.google.android.horologist.compose.layout.ColumnItemType
-import com.google.android.horologist.compose.layout.rememberResponsiveColumnPadding
 
 @Composable
 fun LibraryScreen(
@@ -79,15 +78,9 @@ fun LibraryScreen(
     val uiState by libraryScreenViewModel.uiState.collectAsStateWithLifecycle()
     val placeholderState = rememberPlaceholderState(isVisible = uiState is LibraryScreenUiState.Loading)
 
-    val contentPadding = rememberResponsiveColumnPadding(
-        first = ColumnItemType.ListHeader,
-        last = ColumnItemType.Button,
-    )
-
     val columnState = rememberTransformingLazyColumnState()
     ScreenScaffold(
         scrollState = columnState,
-        contentPadding = contentPadding,
         modifier = modifier.placeholderShimmer(placeholderState),
     ) { contentPadding ->
         when (val s = uiState) {
@@ -132,6 +125,7 @@ fun NoSubscribedPodcastScreen(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
+    val transformationSpec = rememberTransformationSpec()
     TransformingLazyColumn(
         state = columnState,
         contentPadding = contentPadding,
@@ -140,6 +134,14 @@ fun NoSubscribedPodcastScreen(
         item {
             ListHeader(
                 contentColor = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(
+                        ListHeaderDefaults.minimumTopListContentPadding,
+                        ListHeaderDefaults.minimumBottomListContentPadding,
+                    )
+                    .transformedHeight(this, transformationSpec),
+                transformation = SurfaceTransformation(transformationSpec),
             ) {
                 Text(stringResource(R.string.entity_no_featured_podcasts))
             }
@@ -152,6 +154,11 @@ fun NoSubscribedPodcastScreen(
                     onClick = {
                         onTogglePodcastFollowed(podcast.uri)
                     },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
+                        .transformedHeight(this, transformationSpec),
+                    transformation = SurfaceTransformation(transformationSpec),
                 )
             }
         } else {
@@ -160,6 +167,11 @@ fun NoSubscribedPodcastScreen(
                     podcast = PodcastInfo(),
                     podcastArtworkPlaceholder = painterResource(id = R.drawable.music),
                     onClick = {},
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
+                        .transformedHeight(this, transformationSpec),
+                    transformation = SurfaceTransformation(transformationSpec),
                 )
             }
         }
@@ -167,7 +179,13 @@ fun NoSubscribedPodcastScreen(
 }
 
 @Composable
-private fun PodcastContent(podcast: PodcastInfo, onClick: () -> Unit, podcastArtworkPlaceholder: Painter?, modifier: Modifier = Modifier) {
+private fun PodcastContent(
+    podcast: PodcastInfo,
+    onClick: () -> Unit,
+    podcastArtworkPlaceholder: Painter?,
+    modifier: Modifier = Modifier,
+    transformation: SurfaceTransformation? = null,
+) {
     val mediaTitle = podcast.title
 
     FilledTonalButton(
@@ -191,10 +209,10 @@ private fun PodcastContent(podcast: PodcastInfo, onClick: () -> Unit, podcastArt
                         ButtonDefaults.LargeIconSize,
                     )
                     .clip(CircleShape),
-
             )
         },
         modifier = modifier.fillMaxWidth(),
+        transformation = transformation,
     )
 }
 
@@ -209,86 +227,103 @@ fun LibraryScreen(
     queue: List<PlayerEpisode>,
     modifier: Modifier = Modifier,
 ) {
-    ScreenScaffold(
-        scrollState = columnState,
+    val transformationSpec = rememberTransformationSpec()
+    TransformingLazyColumn(
+        state = columnState,
         contentPadding = contentPadding,
-        modifier = modifier.placeholderShimmer(placeholderState),
-    ) { contentPadding ->
-        val transformationSpec = rememberTransformationSpec()
-        TransformingLazyColumn(state = columnState, contentPadding = contentPadding) {
-            item {
-                ListHeader(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .transformedHeight(this, transformationSpec)
-                        .placeholder(placeholderState),
-                    transformation = SurfaceTransformation(transformationSpec),
-                ) {
-                    Text(stringResource(R.string.home_library))
-                }
-            }
-            item {
-                FilledTonalButton(
-                    label = { Text(stringResource(R.string.latest_episodes)) },
-                    onClick = { onLatestEpisodeClick() },
-                    icon = {
-                        IconWithBackground(
-                            R.drawable.new_releases,
-                            stringResource(R.string.latest_episodes),
-                        )
-                    },
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .transformedHeight(this, transformationSpec)
-                        .placeholder(placeholderState = placeholderState),
-                    transformation = SurfaceTransformation(transformationSpec),
-                )
-            }
-            item {
-                FilledTonalButton(
-                    label = { Text(stringResource(R.string.podcasts)) },
-                    onClick = { onYourPodcastClick() },
-                    icon = {
-                        IconWithBackground(R.drawable.podcast, stringResource(R.string.podcasts))
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .transformedHeight(this, transformationSpec)
-                        .placeholder(placeholderState = placeholderState),
-                    transformation = SurfaceTransformation(transformationSpec),
-                )
-            }
-            item {
-                ListHeader(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .transformedHeight(this, transformationSpec)
-                        .placeholder(placeholderState = placeholderState),
-                    transformation = SurfaceTransformation(transformationSpec),
-                ) {
-                    Text(stringResource(R.string.queue))
-                }
-            }
-            item {
-                if (queue.isEmpty()) {
-                    QueueEmptyText()
-                } else {
-                    FilledTonalButton(
-                        label = { Text(stringResource(R.string.up_next)) },
-                        onClick = { onUpNextClick() },
-                        icon = {
-                            IconWithBackground(R.drawable.up_next, stringResource(R.string.up_next))
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .transformedHeight(this, transformationSpec)
-                            .placeholder(placeholderState = placeholderState),
-                        transformation = SurfaceTransformation(transformationSpec),
+        modifier = modifier,
+    ) {
+        item {
+            ListHeader(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(
+                        ListHeaderDefaults.minimumTopListContentPadding,
+                        ListHeaderDefaults.minimumBottomListContentPadding,
                     )
-                }
+                    .transformedHeight(this, transformationSpec)
+                    .placeholder(placeholderState),
+                transformation = SurfaceTransformation(transformationSpec),
+            ) {
+                Text(stringResource(R.string.home_library))
+            }
+        }
+        item {
+            FilledTonalButton(
+                label = { Text(stringResource(R.string.latest_episodes)) },
+                onClick = { onLatestEpisodeClick() },
+                icon = {
+                    IconWithBackground(
+                        R.drawable.new_releases,
+                        stringResource(R.string.latest_episodes),
+                    )
+                },
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
+                    .transformedHeight(this, transformationSpec)
+                    .placeholder(placeholderState = placeholderState),
+                transformation = SurfaceTransformation(transformationSpec),
+            )
+        }
+        item {
+            FilledTonalButton(
+                label = { Text(stringResource(R.string.podcasts)) },
+                onClick = { onYourPodcastClick() },
+                icon = {
+                    IconWithBackground(R.drawable.podcast, stringResource(R.string.podcasts))
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
+                    .transformedHeight(this, transformationSpec)
+                    .placeholder(placeholderState = placeholderState),
+                transformation = SurfaceTransformation(transformationSpec),
+            )
+        }
+        item {
+            ListHeader(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(
+                        ListHeaderDefaults.minimumTopListContentPadding,
+                        ListHeaderDefaults.minimumBottomListContentPadding,
+                    )
+                    .transformedHeight(this, transformationSpec)
+                    .placeholder(placeholderState = placeholderState),
+                transformation = SurfaceTransformation(transformationSpec),
+            ) {
+                Text(stringResource(R.string.queue))
+            }
+        }
+        item {
+            if (queue.isEmpty()) {
+                QueueEmptyText(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .minimumVerticalContentPadding(
+                            TextDefaults.minimumTopListContentPadding,
+                            TextDefaults.minimumBottomListContentPadding,
+                        )
+                        .transformedHeight(this, transformationSpec),
+                )
+            } else {
+                FilledTonalButton(
+                    label = { Text(stringResource(R.string.up_next)) },
+                    onClick = { onUpNextClick() },
+                    icon = {
+                        IconWithBackground(R.drawable.up_next, stringResource(R.string.up_next))
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
+                        .transformedHeight(this, transformationSpec)
+                        .placeholder(placeholderState = placeholderState),
+                    transformation = SurfaceTransformation(transformationSpec),
+                )
             }
         }
     }
@@ -318,7 +353,7 @@ private fun IconWithBackground(resource: Int, contentDescription: String, modifi
 private fun QueueEmptyText(modifier: Modifier = Modifier) {
     Text(
         text = stringResource(id = R.string.add_episode_to_queue),
-        modifier = modifier.padding(top = 8.dp, bottom = 8.dp),
+        modifier = modifier,
         textAlign = TextAlign.Center,
         style = MaterialTheme.typography.bodySmall,
     )
@@ -350,15 +385,11 @@ fun LibraryScreenPreview(
 @Composable
 fun PodcastContentPreview(@PreviewParameter(WearPreviewPodcasts::class) podcasts: PodcastInfo, modifier: Modifier = Modifier) {
     AppScaffold {
-        val contentPadding = rememberResponsiveColumnPadding(
-            first = ColumnItemType.Button,
-        )
-
-        ScreenScaffold(contentPadding = contentPadding) {
+        ScreenScaffold {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(contentPadding),
+                    .padding(it),
             ) {
                 PodcastContent(
                     podcast = podcasts,

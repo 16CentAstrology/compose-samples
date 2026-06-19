@@ -34,6 +34,7 @@ import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.FilledTonalButton
 import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import androidx.wear.compose.ui.tooling.preview.WearPreviewFontScales
@@ -41,8 +42,6 @@ import coil.compose.AsyncImage
 import com.example.jetcaster.R
 import com.example.jetcaster.core.player.model.PlayerEpisode
 import com.example.jetcaster.ui.preview.WearPreviewEpisodes
-import com.google.android.horologist.compose.layout.ColumnItemType
-import com.google.android.horologist.compose.layout.rememberResponsiveColumnPadding
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -52,6 +51,7 @@ fun MediaContent(
     onItemClick: (PlayerEpisode) -> Unit,
     modifier: Modifier = Modifier,
     episodeArtworkPlaceholder: Painter = painterResource(id = R.drawable.music),
+    transformation: SurfaceTransformation? = null,
 ) {
     val mediaTitle = episode.title
     val duration = episode.duration
@@ -99,10 +99,10 @@ fun MediaContent(
                         ButtonDefaults.LargeIconSize,
                     )
                     .clip(CircleShape),
-
             )
         },
         modifier = modifier.fillMaxWidth(),
+        transformation = transformation,
     )
 }
 
@@ -115,11 +115,7 @@ fun MediaContentPreview(
     modifier: Modifier = Modifier,
 ) {
     AppScaffold(modifier = modifier) {
-        val contentPadding = rememberResponsiveColumnPadding(
-            first = ColumnItemType.Button,
-        )
-
-        ScreenScaffold(contentPadding = contentPadding) {
+        ScreenScaffold { contentPadding ->
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

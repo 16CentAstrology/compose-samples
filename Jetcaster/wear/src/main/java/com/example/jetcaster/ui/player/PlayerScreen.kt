@@ -33,6 +33,7 @@ package com.example.jetcaster.ui.player
  */
 
 import android.content.Context
+import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -44,7 +45,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -56,14 +57,11 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.session.MediaSession
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
-import androidx.wear.compose.foundation.ExperimentalWearFoundationApi
 import androidx.wear.compose.foundation.requestFocusOnHierarchyActive
 import androidx.wear.compose.foundation.rotary.rotaryScrollable
-import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material3.MaterialTheme
 import com.example.jetcaster.R
 import com.example.jetcaster.ui.components.SettingsButtons
-import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.audio.ui.VolumeUiState
 import com.google.android.horologist.audio.ui.VolumeViewModel
 import com.google.android.horologist.audio.ui.volumeRotaryBehavior
@@ -77,9 +75,7 @@ import com.google.android.horologist.media.ui.material3.components.display.Loadi
 import com.google.android.horologist.media.ui.material3.components.display.TextMediaDisplay
 import com.google.android.horologist.media.ui.material3.screens.player.PlayerScreen
 import java.time.Duration
-import kotlin.OptIn
 
-@OptIn(ExperimentalHorologistApi::class)
 @Composable
 fun PlayerScreen(
     volumeViewModel: VolumeViewModel,
@@ -98,12 +94,7 @@ fun PlayerScreen(
     )
 }
 
-@androidx.annotation.OptIn(UnstableApi::class)
-@OptIn(
-    ExperimentalHorologistApi::class,
-    ExperimentalWearFoundationApi::class,
-    ExperimentalWearMaterialApi::class,
-)
+@OptIn(UnstableApi::class)
 @Composable
 private fun PlayerScreen(
     playerScreenViewModel: PlayerViewModel,
@@ -161,9 +152,7 @@ private fun PlayerScreen(
             val exoPlayer = rememberPlayer(context)
 
             DisposableEffect(exoPlayer, episode) {
-                episode?.mediaUrls?.let { urls ->
-                    exoPlayer.setMediaItems(urls.map { MediaItem.fromUri(it) })
-                }
+                episode?.mediaUrls?.let { exoPlayer.setMediaItems(it.map { MediaItem.fromUri(it) }) }
                 val mediaSession = MediaSession.Builder(context, exoPlayer).build()
 
                 exoPlayer.prepare()

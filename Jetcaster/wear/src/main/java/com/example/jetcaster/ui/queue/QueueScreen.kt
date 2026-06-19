@@ -31,22 +31,27 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumnState
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.AlertDialog
+import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.ButtonGroup
 import androidx.wear.compose.material3.FilledIconButton
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.IconButtonShapes
 import androidx.wear.compose.material3.ListHeader
+import androidx.wear.compose.material3.ListHeaderDefaults
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.PlaceholderState
 import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.lazy.rememberTransformationSpec
+import androidx.wear.compose.material3.lazy.transformedHeight
 import androidx.wear.compose.material3.placeholder
 import androidx.wear.compose.material3.placeholderShimmer
 import androidx.wear.compose.material3.rememberPlaceholderState
@@ -56,13 +61,8 @@ import com.example.jetcaster.R
 import com.example.jetcaster.core.player.model.PlayerEpisode
 import com.example.jetcaster.ui.components.MediaContent
 import com.example.jetcaster.ui.preview.WearPreviewEpisodes
-import com.google.android.horologist.annotations.ExperimentalHorologistApi
-import com.google.android.horologist.compose.layout.ColumnItemType
-import com.google.android.horologist.compose.layout.rememberResponsiveColumnPadding
 
-@OptIn(ExperimentalHorologistApi::class)
-@Composable
-fun QueueScreen(
+@Composable fun QueueScreen(
     onPlayButtonClick: () -> Unit,
     onEpisodeItemClick: (PlayerEpisode) -> Unit,
     onDismiss: () -> Unit,
@@ -83,7 +83,7 @@ fun QueueScreen(
         onDismiss = onDismiss,
     )
 }
-@OptIn(ExperimentalHorologistApi::class)
+
 @Composable
 fun QueueScreen(
     uiState: QueueScreenState,
@@ -95,15 +95,9 @@ fun QueueScreen(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val contentPadding = rememberResponsiveColumnPadding(
-        first = ColumnItemType.ListHeader,
-        last = ColumnItemType.Button,
-    )
-
     val columnState = rememberTransformingLazyColumnState()
     ScreenScaffold(
         scrollState = columnState,
-        contentPadding = contentPadding,
         modifier = modifier.placeholderShimmer(placeholderState),
     ) { contentPadding ->
         when (uiState) {
@@ -146,16 +140,26 @@ fun QueueScreenLoaded(
     placeholderState: PlaceholderState,
     modifier: Modifier = Modifier,
 ) {
+    val transformationSpec = rememberTransformationSpec()
     TransformingLazyColumn(
         modifier = modifier,
         state = columnState,
         contentPadding = contentPadding,
     ) {
         item {
-            ListHeader {
+            ListHeader(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(
+                        ListHeaderDefaults.minimumTopListContentPadding,
+                        ListHeaderDefaults.minimumBottomListContentPadding,
+                    )
+                    .transformedHeight(this, transformationSpec)
+                    .placeholder(placeholderState),
+                transformation = SurfaceTransformation(transformationSpec),
+            ) {
                 Text(
                     text = stringResource(R.string.queue),
-                    modifier = Modifier.placeholder(placeholderState),
                 )
             }
         }
@@ -166,6 +170,10 @@ fun QueueScreenLoaded(
                 onPlayEpisodes = onPlayEpisodes,
                 onDeleteQueueEpisodes = onDeleteQueueEpisodes,
                 placeholderState = placeholderState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
+                    .transformedHeight(this, transformationSpec),
             )
         }
         items(episodeList) { episode ->
@@ -173,6 +181,11 @@ fun QueueScreenLoaded(
                 episode = episode,
                 episodeArtworkPlaceholder = painterResource(id = R.drawable.music),
                 onItemClick = onEpisodeItemClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
+                    .transformedHeight(this, transformationSpec),
+                transformation = SurfaceTransformation(transformationSpec),
             )
         }
     }
@@ -254,10 +267,6 @@ fun QueueScreenLoadedPreview(
     episode: PlayerEpisode,
 ) {
     val columnState = rememberTransformingLazyColumnState()
-    val contentPadding = rememberResponsiveColumnPadding(
-        first = ColumnItemType.ListHeader,
-        last = ColumnItemType.Button,
-    )
     QueueScreenLoaded(
         episodeList = listOf(episode),
         onPlayButtonClick = { },
@@ -265,7 +274,7 @@ fun QueueScreenLoadedPreview(
         onDeleteQueueEpisodes = { },
         onEpisodeItemClick = { },
         columnState = columnState,
-        contentPadding = contentPadding,
+        contentPadding = PaddingValues(),
         placeholderState = rememberPlaceholderState(isVisible = false),
     )
 }

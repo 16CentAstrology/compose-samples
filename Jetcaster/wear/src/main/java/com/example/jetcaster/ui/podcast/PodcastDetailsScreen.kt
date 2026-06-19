@@ -25,7 +25,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumnState
@@ -33,11 +33,16 @@ import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.AlertDialog
 import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.ListHeader
+import androidx.wear.compose.material3.ListHeaderDefaults
 import androidx.wear.compose.material3.PlaceholderState
 import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.lazy.rememberTransformationSpec
+import androidx.wear.compose.material3.lazy.transformedHeight
 import androidx.wear.compose.material3.placeholder
 import androidx.wear.compose.material3.placeholderShimmer
 import androidx.wear.compose.material3.rememberPlaceholderState
@@ -48,13 +53,8 @@ import com.example.jetcaster.core.domain.testing.PreviewPodcastEpisodes
 import com.example.jetcaster.core.player.model.PlayerEpisode
 import com.example.jetcaster.ui.components.MediaContent
 import com.example.jetcaster.ui.preview.WearPreviewEpisodes
-import com.google.android.horologist.annotations.ExperimentalHorologistApi
-import com.google.android.horologist.compose.layout.ColumnItemType
-import com.google.android.horologist.compose.layout.rememberResponsiveColumnPadding
 
-@OptIn(ExperimentalHorologistApi::class)
-@Composable
-fun PodcastDetailsScreen(
+@Composable fun PodcastDetailsScreen(
     onPlayButtonClick: () -> Unit,
     onEpisodeItemClick: (PlayerEpisode) -> Unit,
     onDismiss: () -> Unit,
@@ -75,7 +75,6 @@ fun PodcastDetailsScreen(
     )
 }
 
-@OptIn(ExperimentalHorologistApi::class)
 @Composable
 fun PodcastDetailsScreen(
     uiState: PodcastDetailsScreenState,
@@ -86,19 +85,12 @@ fun PodcastDetailsScreen(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-
-    val contentPadding = rememberResponsiveColumnPadding(
-        first = ColumnItemType.ListHeader,
-        last = ColumnItemType.Button,
-    )
-
     val columnState = rememberTransformingLazyColumnState()
 
     ScreenScaffold(
         scrollState = columnState,
-        contentPadding = contentPadding,
         modifier = modifier.placeholderShimmer(placeholderState),
-    ) {
+    ) { contentPadding ->
         when (uiState) {
             is PodcastDetailsScreenState.Loaded -> {
                 PodcastDetailScreenLoaded(
@@ -149,17 +141,27 @@ fun PodcastDetailScreenLoaded(
     placeholderState: PlaceholderState,
     modifier: Modifier = Modifier,
 ) {
+    val transformationSpec = rememberTransformationSpec()
     TransformingLazyColumn(
         modifier = modifier,
         state = columnState,
         contentPadding = contentPadding,
     ) {
         item {
-            ListHeader {
+            ListHeader(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(
+                        ListHeaderDefaults.minimumTopListContentPadding,
+                        ListHeaderDefaults.minimumBottomListContentPadding,
+                    )
+                    .transformedHeight(this, transformationSpec)
+                    .placeholder(placeholderState),
+                transformation = SurfaceTransformation(transformationSpec),
+            ) {
                 Text(
                     text = title, maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.placeholder(placeholderState),
                 )
             }
         }
@@ -169,6 +171,11 @@ fun PodcastDetailScreenLoaded(
                 onPlayButtonClick = onPlayButtonClick,
                 onPlayEpisode = onPlayEpisode,
                 placeholderState = placeholderState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
+                    .transformedHeight(this, transformationSpec),
+                transformation = SurfaceTransformation(transformationSpec),
             )
         }
         items(episodeList) { episode ->
@@ -176,6 +183,11 @@ fun PodcastDetailScreenLoaded(
                 episode = episode,
                 episodeArtworkPlaceholder = painterResource(id = R.drawable.music),
                 onItemClick = onEpisodeItemClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
+                    .transformedHeight(this, transformationSpec),
+                transformation = SurfaceTransformation(transformationSpec),
             )
         }
     }
@@ -189,8 +201,8 @@ fun ButtonsContent(
     placeholderState: PlaceholderState,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    transformation: SurfaceTransformation? = null,
 ) {
-
     Button(
         onClick = {
             onPlayButtonClick()
@@ -205,12 +217,12 @@ fun ButtonsContent(
         },
         modifier = modifier.fillMaxWidth()
             .placeholder(placeholderState = placeholderState),
+        transformation = transformation,
     ) {
         Text(stringResource(id = R.string.button_play_content_description))
     }
 }
 
-@OptIn(ExperimentalHorologistApi::class)
 @WearPreviewDevices
 @WearPreviewFontScales
 @Composable

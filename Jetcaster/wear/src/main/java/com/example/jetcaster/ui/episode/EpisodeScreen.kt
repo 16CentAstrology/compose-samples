@@ -30,25 +30,31 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumnScope
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumnState
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
-import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material3.AlertDialog
+import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.ButtonGroup
 import androidx.wear.compose.material3.FilledIconButton
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.IconButtonShapes
 import androidx.wear.compose.material3.ListHeader
+import androidx.wear.compose.material3.ListHeaderDefaults
 import androidx.wear.compose.material3.LocalContentColor
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.PlaceholderState
 import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.TextDefaults
+import androidx.wear.compose.material3.lazy.TransformationSpec
+import androidx.wear.compose.material3.lazy.rememberTransformationSpec
+import androidx.wear.compose.material3.lazy.transformedHeight
 import androidx.wear.compose.material3.placeholder
 import androidx.wear.compose.material3.placeholderShimmer
 import androidx.wear.compose.material3.rememberPlaceholderState
@@ -60,12 +66,7 @@ import com.example.jetcaster.core.player.model.toPlayerEpisode
 import com.example.jetcaster.designsystem.component.HtmlTextContainer
 import com.example.jetcaster.ui.components.MediumDateFormatter
 import com.example.jetcaster.ui.preview.WearPreviewEpisodes
-import com.google.android.horologist.annotations.ExperimentalHorologistApi
-import com.google.android.horologist.compose.layout.ColumnItemType
-import com.google.android.horologist.compose.layout.ScalingLazyColumnDefaults.listTextPadding
-import com.google.android.horologist.compose.layout.rememberResponsiveColumnPadding
 
-@OptIn(ExperimentalWearMaterialApi::class, ExperimentalHorologistApi::class)
 @Composable
 fun EpisodeScreen(
     onPlayButtonClick: () -> Unit,
@@ -87,7 +88,6 @@ fun EpisodeScreen(
     )
 }
 
-@OptIn(ExperimentalHorologistApi::class)
 @Composable
 fun EpisodeScreen(
     uiState: EpisodeScreenState,
@@ -98,15 +98,9 @@ fun EpisodeScreen(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val contentPadding = rememberResponsiveColumnPadding(
-        first = ColumnItemType.ListHeader,
-        last = ColumnItemType.Button,
-    )
-
     val columnState = rememberTransformingLazyColumnState()
     ScreenScaffold(
         scrollState = columnState,
-        contentPadding = contentPadding,
         modifier = modifier.placeholderShimmer(placeholderState),
     ) { contentPadding ->
         when (uiState) {
@@ -161,13 +155,23 @@ fun EpisodeScreenLoaded(
     placeholderState: PlaceholderState,
     modifier: Modifier = Modifier,
 ) {
+    val transformationSpec = rememberTransformationSpec()
     TransformingLazyColumn(
         modifier = modifier,
         state = columnState,
         contentPadding = contentPadding,
     ) {
         item {
-            ListHeader {
+            ListHeader(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(
+                        ListHeaderDefaults.minimumTopListContentPadding,
+                        ListHeaderDefaults.minimumBottomListContentPadding,
+                    )
+                    .transformedHeight(this, transformationSpec),
+                transformation = SurfaceTransformation(transformationSpec),
+            ) {
                 Text(
                     text = title,
                     maxLines = 1,
@@ -184,11 +188,16 @@ fun EpisodeScreenLoaded(
                 onPlayEpisode = onPlayEpisode,
                 onAddToQueue = onAddToQueue,
                 placeholderState = placeholderState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding)
+                    .transformedHeight(this, transformationSpec),
             )
         }
         if (!placeholderState.isVisible) {
             episodeInfoContent(
                 episode = episode,
+                transformationSpec = transformationSpec,
             )
         }
     }
@@ -207,7 +216,7 @@ fun LoadedButtonsContent(
     val playInteractionSource = remember { MutableInteractionSource() }
     val addToQueueInteractionSource = remember { MutableInteractionSource() }
 
-    ButtonGroup(modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+    ButtonGroup(modifier.padding(bottom = 16.dp)) {
 
         FilledIconButton(
             onClick = {
@@ -245,7 +254,7 @@ fun LoadedButtonsContent(
     }
 }
 
-private fun TransformingLazyColumnScope.episodeInfoContent(episode: PlayerEpisode) {
+private fun TransformingLazyColumnScope.episodeInfoContent(episode: PlayerEpisode, transformationSpec: TransformationSpec) {
     val author = episode.author
     val duration = episode.duration
     val published = episode.published
@@ -258,6 +267,7 @@ private fun TransformingLazyColumnScope.episodeInfoContent(episode: PlayerEpisod
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.transformedHeight(this, transformationSpec),
             )
         }
     }
@@ -282,25 +292,33 @@ private fun TransformingLazyColumnScope.episodeInfoContent(episode: PlayerEpisod
             overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = 8.dp)
+                .transformedHeight(this, transformationSpec),
         )
     }
     if (summary != null) {
         val summaryInParagraphs = summary.split("\n+".toRegex()).orEmpty()
         items(summaryInParagraphs) {
-            HtmlTextContainer(text = summary) {
+            HtmlTextContainer(
+                text = it,
+                modifier = Modifier.minimumVerticalContentPadding(
+                    TextDefaults.minimumTopListContentPadding,
+                    TextDefaults.minimumBottomListContentPadding,
+                ),
+            ) {
                 Text(
                     text = it,
                     style = MaterialTheme.typography.bodySmall,
                     color = LocalContentColor.current,
-                    modifier = Modifier.listTextPadding(),
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .transformedHeight(this, transformationSpec),
                 )
             }
         }
     }
 }
 
-@OptIn(ExperimentalHorologistApi::class)
 @WearPreviewDevices
 @WearPreviewFontScales
 @Composable
@@ -323,11 +341,6 @@ fun EpisodeScreenLoadingPreview(
     @PreviewParameter(WearPreviewEpisodes::class)
     episode: PlayerEpisode,
 ) {
-    val contentPadding = rememberResponsiveColumnPadding(
-        first = ColumnItemType.ListHeader,
-        last = ColumnItemType.Button,
-    )
-
     val columnState = rememberTransformingLazyColumnState()
     EpisodeScreenLoaded(
         title = episode.title,
@@ -336,7 +349,7 @@ fun EpisodeScreenLoadingPreview(
         onPlayEpisode = { },
         onAddToQueue = { },
         columnState = columnState,
-        contentPadding = contentPadding,
+        contentPadding = PaddingValues(),
         placeholderState = rememberPlaceholderState(isVisible = true),
     )
 }
@@ -349,11 +362,6 @@ fun EpisodeScreenLoadedPreview(
     episode: PlayerEpisode,
 ) {
     val columnState = rememberTransformingLazyColumnState()
-    val contentPadding = rememberResponsiveColumnPadding(
-        first = ColumnItemType.ListHeader,
-        last = ColumnItemType.Button,
-    )
-
     EpisodeScreenLoaded(
         title = episode.title,
         episode = episode,
@@ -361,7 +369,7 @@ fun EpisodeScreenLoadedPreview(
         onPlayEpisode = { },
         onAddToQueue = { },
         columnState = columnState,
-        contentPadding = contentPadding,
+        contentPadding = PaddingValues(),
         placeholderState = rememberPlaceholderState(isVisible = false),
     )
 }
